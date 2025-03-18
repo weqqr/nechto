@@ -1,7 +1,9 @@
 pub mod allocator;
 
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
+#[derive(Copy, Clone)]
 pub struct Handle<T> {
     value: u64,
     _pd: PhantomData<fn(&T)>,
@@ -23,5 +25,11 @@ impl<T> Handle<T> {
 
     pub const fn to_usize(&self) -> usize {
         self.value as usize
+    }
+}
+
+impl<T> Debug for Handle<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Handle ({})", self.value)
     }
 }
