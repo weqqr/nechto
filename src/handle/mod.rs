@@ -1,4 +1,6 @@
-pub mod allocator;
+mod allocator;
+
+pub use self::allocator::HandleAllocator;
 
 use std::fmt::Debug;
 use std::marker::PhantomData;
