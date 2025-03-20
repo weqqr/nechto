@@ -3,8 +3,10 @@ use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::window::{Window, WindowId};
 
+use crate::render::Renderer;
+
 pub struct Resources {
-    window: Option<Window>,
+    window: Option<Renderer>,
 }
 
 pub struct EventHandler {}
@@ -66,7 +68,8 @@ impl ApplicationHandler for Runtime {
         let window_attributes = Window::default_attributes();
         let window = event_loop.create_window(window_attributes).unwrap();
 
-        self.resources.window = Some(window);
+        let renderer = Renderer::new(window);
+        self.resources.window = Some(renderer);
     }
 
     fn window_event(

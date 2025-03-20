@@ -6,3 +6,4 @@ pub mod handle;
 pub mod realm;
 pub mod gpu;
 pub mod runtime;
+pub mod render;
