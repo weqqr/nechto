@@ -15,7 +15,9 @@ impl Renderer {
             window.window_handle().unwrap(),
             size.width,
             size.height,
-            ContextOptions::default(),
+            ContextOptions {
+                enable_debug: true,
+            },
         );
 
         Self { window, ctx }
