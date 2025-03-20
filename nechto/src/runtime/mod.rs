@@ -1,12 +1,15 @@
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
+use winit::keyboard::KeyCode;
 use winit::window::{Window, WindowId};
 
+use crate::input::{Action, InputHandler};
 use crate::render::Renderer;
 
 pub struct Resources {
     window: Option<Renderer>,
+    input_handler: InputHandler,
 }
 
 pub struct EventHandler {}
@@ -30,10 +33,20 @@ impl EventHandler {
                 // resize renderer
             }
             WindowEvent::KeyboardInput { event, .. } => {
-                // submit to the input handler
+                resources.input_handler.submit_key_event(event);
             }
             _ => {}
         }
+    }
+
+    fn on_update(&mut self, event_loop: &ActiveEventLoop, resources: &mut Resources) {
+        for action in resources.input_handler.actions() {
+            if action.name() == "quit" {
+                event_loop.exit();
+            }
+        }
+
+        resources.input_handler.reset();
     }
 
     fn on_render(&mut self, resources: &mut Resources) {
@@ -48,10 +61,15 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn new() -> Self {
+        let mut input_handler = InputHandler::new();
+
+        input_handler.add_action(KeyCode::Escape, Action::new("quit"));
+
         Self {
             event_handler: EventHandler::new(),
             resources: Resources {
                 window: None,
+                input_handler,
             },
         }
     }
@@ -83,6 +101,7 @@ impl ApplicationHandler for Runtime {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        self.event_handler.on_update(event_loop, &mut self.resources);
         self.event_handler.on_render(&mut self.resources);
     }
 }
