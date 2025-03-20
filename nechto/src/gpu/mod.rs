@@ -1,6 +1,6 @@
-pub mod command;
-pub mod pipeline;
-pub mod present;
+mod command;
+mod pipeline;
+mod present;
 
 use ash::ext::debug_utils;
 use ash::khr::{surface, swapchain, win32_surface};
