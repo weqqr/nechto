@@ -9,7 +9,7 @@ use tracing::{debug, error, info, warn};
 use winit::raw_window_handle::WindowHandle;
 
 use crate::gpu::command::CommandBufferAllocator;
-use crate::gpu::pipeline::Pipeline;
+use crate::gpu::pipeline::{Pipeline, PipelineDescriptor};
 use crate::gpu::present::Swapchain;
 
 #[derive(Default)]
@@ -105,7 +105,10 @@ impl Context {
                 height,
             );
 
-            let test_pipeline = Pipeline::new(&device);
+            let test_pipeline = Pipeline::new(&device, PipelineDescriptor{
+                vertex_shader: vec![0, 0, 0, 0],
+                fragment_shader: vec![0, 0, 0, 0],
+            });
 
             Self {
                 entry,
