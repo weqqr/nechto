@@ -71,7 +71,7 @@ impl Runtime {
         let mut vfs = VirtualFs::new();
         vfs.add_search_path("$data", "data".into());
 
-        let spirv = vfs.read("$data/testspirv.bin");
+        let spirv = vfs.read("$data/testspirv.bin").unwrap();
 
         Self {
             event_handler: EventHandler::new(),
