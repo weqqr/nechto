@@ -11,6 +11,7 @@ use crate::vfs::VirtualFs;
 pub struct Resources {
     renderer: Option<Renderer>,
     input_handler: InputHandler,
+    vfs: VirtualFs,
 }
 
 pub struct EventHandler {}
@@ -69,15 +70,15 @@ impl Runtime {
         input_handler.add_action(KeyCode::Escape, Action::new("quit"));
 
         let mut vfs = VirtualFs::new();
+        vfs.add_search_path("$build", "build".into());
         vfs.add_search_path("$data", "data".into());
-
-        let spirv = vfs.read("$data/testspirv.bin").unwrap();
 
         Self {
             event_handler: EventHandler::new(),
             resources: Resources {
                 renderer: None,
                 input_handler,
+                vfs,
             },
         }
     }
