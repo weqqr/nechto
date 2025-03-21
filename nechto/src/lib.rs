@@ -2,10 +2,10 @@
 #![allow(clippy::single_match)]
 
 pub mod collections;
-pub mod handle;
-pub mod realm;
 pub mod gpu;
-pub mod runtime;
-pub mod render;
+pub mod handle;
 pub mod input;
+pub mod realm;
+pub mod render;
+pub mod runtime;
 pub mod vfs;

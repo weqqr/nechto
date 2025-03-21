@@ -105,10 +105,13 @@ impl Context {
                 height,
             );
 
-            let test_pipeline = Pipeline::new(&device, PipelineDescriptor{
-                vertex_shader: vec![0, 0, 0, 0],
-                fragment_shader: vec![0, 0, 0, 0],
-            });
+            let test_pipeline = Pipeline::new(
+                &device,
+                PipelineDescriptor {
+                    vertex_shader: vec![0, 0, 0, 0],
+                    fragment_shader: vec![0, 0, 0, 0],
+                },
+            );
 
             Self {
                 entry,
@@ -137,9 +140,7 @@ impl Context {
         }
     }
 
-    pub fn begin_frame(&mut self) {
-
-    }
+    pub fn begin_frame(&mut self) {}
 
     pub fn end_frame(&mut self) {}
 }
