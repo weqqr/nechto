@@ -9,6 +9,7 @@ use tracing::{debug, error, info, warn};
 use winit::raw_window_handle::WindowHandle;
 
 use crate::gpu::command::CommandBufferAllocator;
+use crate::gpu::pipeline::Pipeline;
 use crate::gpu::present::Swapchain;
 
 #[derive(Default)]
@@ -32,6 +33,8 @@ pub struct Context {
     swapchain: Swapchain,
 
     current_frame_index: usize,
+
+    test_pipeline: Pipeline,
 }
 
 // IMPORTANT: I couldn't figure out how to marry Vulkan with RAII, so all Vulkan
@@ -39,6 +42,7 @@ pub struct Context {
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
+            self.test_pipeline.destroy();
             self.swapchain.destroy();
             self.command_buffer_allocator.destroy();
             self.device.destroy_device(None);
@@ -101,6 +105,8 @@ impl Context {
                 height,
             );
 
+            let test_pipeline = Pipeline::new(&device);
+
             Self {
                 entry,
                 instance,
@@ -113,7 +119,8 @@ impl Context {
                 graphics_compute_queue,
                 command_buffer_allocator,
                 swapchain,
-                current_frame_index: 0, // will be filled by swapchain once rendering starts
+                current_frame_index: 0, // will be filled by the swapchain once rendering starts
+                test_pipeline,
             }
         }
     }
@@ -127,7 +134,9 @@ impl Context {
         }
     }
 
-    pub fn begin_frame(&mut self) {}
+    pub fn begin_frame(&mut self) {
+
+    }
 
     pub fn end_frame(&mut self) {}
 }
