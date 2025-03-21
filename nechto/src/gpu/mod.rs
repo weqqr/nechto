@@ -118,7 +118,7 @@ impl Context {
         }
     }
 
-    pub fn resize(&mut self, width: u32, height: u32) {
+    pub fn resize_swapchain(&mut self, width: u32, height: u32) {
         unsafe {
             self.device
                 .queue_wait_idle(self.graphics_compute_queue)

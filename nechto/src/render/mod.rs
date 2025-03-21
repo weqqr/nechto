@@ -1,3 +1,4 @@
+use winit::dpi::PhysicalSize;
 use winit::raw_window_handle::HasWindowHandle;
 use winit::window::Window;
 
@@ -21,5 +22,9 @@ impl Renderer {
         );
 
         Self { window, ctx }
+    }
+
+    pub fn resize(&mut self, size: PhysicalSize<u32>) {
+        self.ctx.resize_swapchain(size.width, size.height);
     }
 }

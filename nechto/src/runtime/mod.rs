@@ -8,7 +8,7 @@ use crate::input::{Action, InputHandler};
 use crate::render::Renderer;
 
 pub struct Resources {
-    window: Option<Renderer>,
+    renderer: Option<Renderer>,
     input_handler: InputHandler,
 }
 
@@ -30,7 +30,9 @@ impl EventHandler {
                 event_loop.exit();
             }
             WindowEvent::Resized(size) => {
-                // resize renderer
+                if let Some(renderer) = &mut resources.renderer {
+                    renderer.resize(size);
+                }
             }
             WindowEvent::KeyboardInput { event, .. } => {
                 resources.input_handler.submit_key_event(event);
@@ -68,7 +70,7 @@ impl Runtime {
         Self {
             event_handler: EventHandler::new(),
             resources: Resources {
-                window: None,
+                renderer: None,
                 input_handler,
             },
         }
@@ -87,7 +89,7 @@ impl ApplicationHandler for Runtime {
         let window = event_loop.create_window(window_attributes).unwrap();
 
         let renderer = Renderer::new(window);
-        self.resources.window = Some(renderer);
+        self.resources.renderer = Some(renderer);
     }
 
     fn window_event(
@@ -101,7 +103,8 @@ impl ApplicationHandler for Runtime {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        self.event_handler.on_update(event_loop, &mut self.resources);
+        self.event_handler
+            .on_update(event_loop, &mut self.resources);
         self.event_handler.on_render(&mut self.resources);
     }
 }
