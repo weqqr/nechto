@@ -8,3 +8,4 @@ pub mod gpu;
 pub mod runtime;
 pub mod render;
 pub mod input;
+pub mod vfs;

@@ -6,6 +6,7 @@ use winit::window::{Window, WindowId};
 
 use crate::input::{Action, InputHandler};
 use crate::render::Renderer;
+use crate::vfs::VirtualFs;
 
 pub struct Resources {
     renderer: Option<Renderer>,
@@ -66,6 +67,11 @@ impl Runtime {
         let mut input_handler = InputHandler::new();
 
         input_handler.add_action(KeyCode::Escape, Action::new("quit"));
+
+        let mut vfs = VirtualFs::new();
+        vfs.add_search_path("$data", "data".into());
+
+        let spirv = vfs.read("$data/testspirv.bin");
 
         Self {
             event_handler: EventHandler::new(),
