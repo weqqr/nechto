@@ -143,9 +143,16 @@ unsafe fn create_graphics_pipeline(
         .layout(pipeline_layout)
         .push_next(&mut rendering_create_info);
 
-    unsafe {
+    let pipeline = unsafe {
         device
             .create_graphics_pipelines(vk::PipelineCache::null(), &[create_info], None)
             .unwrap()[0]
+    };
+
+    unsafe {
+        device.destroy_shader_module(vertex_shader_module, None);
+        device.destroy_shader_module(fragment_shader_module, None);
     }
+
+    pipeline
 }
