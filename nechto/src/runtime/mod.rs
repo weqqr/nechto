@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
@@ -11,7 +13,7 @@ use crate::vfs::VirtualFs;
 pub struct Resources {
     renderer: Option<Renderer>,
     input_handler: InputHandler,
-    vfs: VirtualFs,
+    vfs: Arc<VirtualFs>,
 }
 
 pub struct EventHandler {}
@@ -73,6 +75,8 @@ impl Runtime {
         vfs.add_search_path("$build", "build".into());
         vfs.add_search_path("$data", "data".into());
 
+        let vfs = Arc::new(vfs);
+
         Self {
             event_handler: EventHandler::new(),
             resources: Resources {
@@ -95,7 +99,7 @@ impl ApplicationHandler for Runtime {
         let window_attributes = Window::default_attributes();
         let window = event_loop.create_window(window_attributes).unwrap();
 
-        let renderer = Renderer::new(window);
+        let renderer = Renderer::new(window, Arc::clone(&self.resources.vfs));
         self.resources.renderer = Some(renderer);
     }
 
