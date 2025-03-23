@@ -13,4 +13,12 @@ impl Text {
     }
 }
 
-impl View for Text {}
+impl View for Text {
+    fn update(&mut self) {
+        todo!()
+    }
+
+    fn render(&self, painter: &dyn super::Painter) {
+        todo!()
+    }
+}

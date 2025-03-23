@@ -21,4 +21,12 @@ impl Button {
     }
 }
 
-impl View for Button {}
+impl View for Button {
+    fn update(&mut self) {
+        todo!()
+    }
+
+    fn render(&self, painter: &dyn super::Painter) {
+        todo!()
+    }
+}

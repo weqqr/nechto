@@ -20,7 +20,15 @@ impl Scope {
     }
 }
 
-impl View for Scope {}
+impl View for Scope {
+    fn update(&mut self) {
+        self.view.update();
+    }
+
+    fn render(&self, painter: &dyn super::Painter) {
+        self.view.render(painter);
+    }
+}
 
 pub struct ScopeContext {}
 

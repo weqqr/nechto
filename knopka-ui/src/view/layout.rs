@@ -19,7 +19,15 @@ impl Layout {
     }
 }
 
-impl View for Layout {}
+impl View for Layout {
+    fn update(&mut self) {
+        todo!()
+    }
+
+    fn render(&self, painter: &dyn super::Painter) {
+        todo!()
+    }
+}
 
 pub trait IntoViews {
     fn into_views(self) -> Vec<Box<dyn View>>;
