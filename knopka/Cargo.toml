@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 nechto = { path = "../nechto" }
-tracing-subscriber = "0.3.19"
+tracing-subscriber = { version = "0.3.19", features = ["ansi", "fmt"], default-features = false }
 
 [build-dependencies]
 nechto-build = { path = "../nechto-build" }
