@@ -14,6 +14,14 @@ pub struct Renderer {
 
     ctx: gpu::Context,
     test_pipeline: gpu::Pipeline,
+
+}
+
+// FIXME: Implement GC for gpu objects and remove Drop impl for renderer
+impl Drop for Renderer {
+    fn drop(&mut self) {
+        self.ctx.destroy_pipeline(&mut self.test_pipeline);
+    }
 }
 
 impl Renderer {

@@ -197,6 +197,10 @@ impl Context {
         unsafe { Pipeline::new(&self.device, desc) }
     }
 
+    pub fn destroy_pipeline(&mut self, pipeline: &mut Pipeline) {
+        unsafe { pipeline.destroy() }
+    }
+
     pub fn begin_frame(&mut self) -> Frame {
         let index = self
             .swapchain
