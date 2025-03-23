@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use winit::event::KeyEvent;
+use winit::event::{ElementState, KeyEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Action {
     name: String,
 }
@@ -21,6 +21,7 @@ impl Action {
 pub struct InputHandler {
     keys_to_actions: HashMap<KeyCode, Action>,
     action_queue: Vec<Action>,
+    active_actions: HashSet<Action>,
 }
 
 impl InputHandler {
@@ -28,6 +29,7 @@ impl InputHandler {
         Self {
             keys_to_actions: HashMap::new(),
             action_queue: Vec::new(),
+            active_actions: HashSet::new(),
         }
     }
 
@@ -44,6 +46,15 @@ impl InputHandler {
             return;
         };
 
+        match event.state {
+            ElementState::Pressed => {
+                self.active_actions.insert(action.clone());
+            },
+            ElementState::Released => {
+                self.active_actions.remove(action);
+            },
+        }
+
         self.action_queue.push(action.clone());
     }
 
@@ -53,5 +64,9 @@ impl InputHandler {
 
     pub fn reset(&mut self) {
         self.action_queue.clear();
+    }
+
+    pub fn is_action_active(&self, action: &Action) -> bool {
+        self.active_actions.contains(action)
     }
 }
