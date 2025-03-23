@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 nechto = { path = "../nechto" }
+knopka-ui = { path = "../knopka-ui" }
 tracing-subscriber = { version = "0.3.19", features = ["ansi", "fmt"], default-features = false }
 
 [build-dependencies]
