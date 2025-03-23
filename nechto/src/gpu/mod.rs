@@ -64,6 +64,8 @@ pub struct Frame {
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
+            self.device.device_wait_idle().unwrap();
+
             for sync in self.frame_sync.drain(..) {
                 self.device.destroy_semaphore(sync.acquire_semaphore, None);
             }
@@ -196,7 +198,9 @@ impl Context {
     }
 
     pub fn begin_frame(&mut self) -> Frame {
-        let index = self.swapchain.acquire_next_frame(self.next_acquire_semaphore);
+        let index = self
+            .swapchain
+            .acquire_next_frame(self.next_acquire_semaphore);
 
         let image = self.swapchain.image(index);
         let image_view = self.swapchain.image_view(index);
@@ -233,6 +237,12 @@ impl Context {
     }
 
     pub fn end_frame(&mut self, frame: Frame) {
+        frame.command_buffer.image_barrier(
+            frame.image,
+            vk::ImageLayout::UNDEFINED,
+            vk::ImageLayout::PRESENT_SRC_KHR,
+        );
+
         frame.command_buffer.end();
 
         let command_buffers = &[frame.command_buffer.raw()];
@@ -265,7 +275,11 @@ impl Context {
                 )
                 .unwrap();
 
-            self.swapchain.present(frame.index, self.present_semaphore, self.graphics_compute_queue);
+            self.swapchain.present(
+                frame.index,
+                self.present_semaphore,
+                self.graphics_compute_queue,
+            );
         }
     }
 }

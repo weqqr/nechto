@@ -168,13 +168,23 @@ impl Swapchain {
 
         unsafe {
             self.swapchain_device
-                .acquire_next_image(self.swapchain, ACQUIRE_TIMEOUT_NS, semaphore, vk::Fence::null())
+                .acquire_next_image(
+                    self.swapchain,
+                    ACQUIRE_TIMEOUT_NS,
+                    semaphore,
+                    vk::Fence::null(),
+                )
                 .unwrap()
                 .0 as usize
         }
     }
 
-    pub(super) fn present(&mut self, index: u32, present_semaphore: vk::Semaphore, graphics_queue: vk::Queue) {
+    pub(super) fn present(
+        &mut self,
+        index: u32,
+        present_semaphore: vk::Semaphore,
+        graphics_queue: vk::Queue,
+    ) {
         let image_indices = &[index];
         let swapchains = &[self.swapchain];
         let wait_semaphores = &[present_semaphore];
@@ -185,7 +195,9 @@ impl Swapchain {
             .wait_semaphores(wait_semaphores);
 
         unsafe {
-            self.swapchain_device.queue_present(graphics_queue, &present_info).unwrap();
+            self.swapchain_device
+                .queue_present(graphics_queue, &present_info)
+                .unwrap();
         }
     }
 }

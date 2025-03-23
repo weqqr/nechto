@@ -88,4 +88,35 @@ impl CommandBuffer {
             self.device.end_command_buffer(self.buffer).unwrap();
         }
     }
+
+    pub(super) fn image_barrier(
+        &self,
+        image: vk::Image,
+        old_layout: vk::ImageLayout,
+        new_layout: vk::ImageLayout,
+    ) {
+        let image_memory_barrier = vk::ImageMemoryBarrier2::default()
+            .old_layout(old_layout)
+            .new_layout(new_layout)
+            .image(image)
+            // FIXME: use subresource range associated with the image
+            .subresource_range(
+                vk::ImageSubresourceRange::default()
+                    .aspect_mask(vk::ImageAspectFlags::COLOR)
+                    .base_array_layer(0)
+                    .layer_count(1)
+                    .base_mip_level(0)
+                    .level_count(1),
+            );
+
+        let image_memory_barriers = &[image_memory_barrier];
+
+        let dependency_info =
+            vk::DependencyInfo::default().image_memory_barriers(image_memory_barriers);
+
+        unsafe {
+            self.device
+                .cmd_pipeline_barrier2(self.buffer, &dependency_info);
+        }
+    }
 }
