@@ -119,4 +119,36 @@ impl CommandBuffer {
                 .cmd_pipeline_barrier2(self.buffer, &dependency_info);
         }
     }
+
+    pub fn begin_rendering(&self, image_view: vk::ImageView, render_area: vk::Rect2D) {
+        let rendering_attachment_info = vk::RenderingAttachmentInfo::default()
+            .clear_value(vk::ClearValue {
+                color: vk::ClearColorValue {
+                    float32: [0.3, 0.0, 0.0, 1.0],
+                },
+            })
+            .image_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+            .image_view(image_view)
+            .load_op(vk::AttachmentLoadOp::CLEAR)
+            .store_op(vk::AttachmentStoreOp::STORE)
+            .resolve_mode(vk::ResolveModeFlags::NONE);
+
+        let color_attachments = &[rendering_attachment_info];
+
+        let rendering_info = vk::RenderingInfo::default()
+            .color_attachments(color_attachments)
+            .layer_count(1)
+            .render_area(render_area);
+
+        unsafe {
+            self.device
+                .cmd_begin_rendering(self.buffer, &rendering_info);
+        }
+    }
+
+    pub fn end_rendering(&self) {
+        unsafe {
+            self.device.cmd_end_rendering(self.buffer);
+        }
+    }
 }

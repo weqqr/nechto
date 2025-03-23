@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use ash::vk;
 use winit::dpi::PhysicalSize;
 use winit::raw_window_handle::HasWindowHandle;
 use winit::window::Window;
@@ -14,7 +15,6 @@ pub struct Renderer {
 
     ctx: gpu::Context,
     test_pipeline: gpu::Pipeline,
-
 }
 
 // FIXME: Implement GC for gpu objects and remove Drop impl for renderer
@@ -56,7 +56,25 @@ impl Renderer {
     }
 
     pub fn render(&mut self) {
-        let frame = self.ctx.begin_frame();
+        let size = self.window.inner_size();
+
+        let mut frame = self.ctx.begin_frame();
+        let target = frame.image_view();
+
+        let cmd = frame.command_buffer();
+
+        cmd.begin_rendering(
+            target,
+            vk::Rect2D {
+                offset: vk::Offset2D { x: 0, y: 0 },
+                extent: vk::Extent2D {
+                    width: size.width,
+                    height: size.height,
+                },
+            },
+        );
+
+        cmd.end_rendering();
 
         self.ctx.end_frame(frame);
     }

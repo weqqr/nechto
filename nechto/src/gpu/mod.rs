@@ -51,14 +51,6 @@ struct FrameSync {
     prev_progress: u64,
 }
 
-pub struct Frame {
-    image: vk::Image,
-    image_view: vk::ImageView,
-    command_buffer: CommandBuffer,
-    acquire_semaphore: vk::Semaphore,
-    index: u32,
-}
-
 // IMPORTANT: I couldn't figure out how to marry Vulkan with RAII, so all Vulkan
 // objects are managed manually. Only `Context` has a Drop impl.
 impl Drop for Context {
@@ -285,6 +277,24 @@ impl Context {
                 self.graphics_compute_queue,
             );
         }
+    }
+}
+
+pub struct Frame {
+    image: vk::Image,
+    image_view: vk::ImageView,
+    command_buffer: CommandBuffer,
+    acquire_semaphore: vk::Semaphore,
+    index: u32,
+}
+
+impl Frame {
+    pub fn command_buffer(&mut self) -> &mut CommandBuffer {
+        &mut self.command_buffer
+    }
+
+    pub fn image_view(&self) -> vk::ImageView {
+        self.image_view
     }
 }
 
