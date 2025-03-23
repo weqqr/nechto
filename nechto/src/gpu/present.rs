@@ -163,15 +163,29 @@ impl Swapchain {
         self.images[index]
     }
 
-    pub(super) fn acquire_next_frame(&mut self) -> usize {
-        // const ACQUIRE_TIMEOUT_NS: u64 = 5_000_000_000;
+    pub(super) fn acquire_next_frame(&mut self, semaphore: vk::Semaphore) -> usize {
+        const ACQUIRE_TIMEOUT_NS: u64 = 5_000_000_000;
 
-        // unsafe {
-        //     self.swapchain_device
-        //         .acquire_next_image(self.swapchain, ACQUIRE_TIMEOUT_NS, semaphore, vk::Fence::null())
-        //         .unwrap()
-        //         .0 as usize
-        // }
-        unimplemented!()
+        unsafe {
+            self.swapchain_device
+                .acquire_next_image(self.swapchain, ACQUIRE_TIMEOUT_NS, semaphore, vk::Fence::null())
+                .unwrap()
+                .0 as usize
+        }
+    }
+
+    pub(super) fn present(&mut self, index: u32, present_semaphore: vk::Semaphore, graphics_queue: vk::Queue) {
+        let image_indices = &[index];
+        let swapchains = &[self.swapchain];
+        let wait_semaphores = &[present_semaphore];
+
+        let present_info = vk::PresentInfoKHR::default()
+            .image_indices(image_indices)
+            .swapchains(swapchains)
+            .wait_semaphores(wait_semaphores);
+
+        unsafe {
+            self.swapchain_device.queue_present(graphics_queue, &present_info).unwrap();
+        }
     }
 }

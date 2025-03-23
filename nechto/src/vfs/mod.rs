@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use tracing::info;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("read error: {path_spec}: {error}")]

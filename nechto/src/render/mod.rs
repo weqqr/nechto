@@ -43,4 +43,10 @@ impl Renderer {
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
         self.ctx.resize_swapchain(size.width, size.height);
     }
+
+    pub fn render(&mut self) {
+        let frame = self.ctx.begin_frame();
+
+        self.ctx.end_frame(frame);
+    }
 }

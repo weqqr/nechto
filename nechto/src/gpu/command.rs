@@ -8,8 +8,9 @@ pub struct CommandBufferAllocator {
 impl CommandBufferAllocator {
     pub(super) unsafe fn new(device: &ash::Device, queue_family_index: u32) -> Self {
         unsafe {
-            let create_info =
-                vk::CommandPoolCreateInfo::default().queue_family_index(queue_family_index);
+            let create_info = vk::CommandPoolCreateInfo::default()
+                .queue_family_index(queue_family_index)
+                .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER);
 
             let pool = device.create_command_pool(&create_info, None).unwrap();
 
@@ -38,7 +39,10 @@ impl CommandBufferAllocator {
                 .allocate_command_buffers(&allocate_info)
                 .unwrap()[0];
 
-            CommandBuffer { buffer }
+            CommandBuffer {
+                device: self.device.clone(),
+                buffer,
+            }
         }
     }
 
@@ -50,13 +54,38 @@ impl CommandBufferAllocator {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct CommandBuffer {
+    device: ash::Device,
     buffer: vk::CommandBuffer,
 }
 
 impl CommandBuffer {
     pub(super) fn raw(&self) -> vk::CommandBuffer {
         self.buffer
+    }
+
+    pub(super) fn begin(&self) {
+        let begin_info = vk::CommandBufferBeginInfo::default();
+
+        unsafe {
+            self.device
+                .begin_command_buffer(self.buffer, &begin_info)
+                .unwrap();
+        }
+    }
+
+    pub(super) fn reset(&self) {
+        unsafe {
+            self.device
+                .reset_command_buffer(self.buffer, vk::CommandBufferResetFlags::RELEASE_RESOURCES)
+                .unwrap();
+        }
+    }
+
+    pub(super) fn end(&self) {
+        unsafe {
+            self.device.end_command_buffer(self.buffer).unwrap();
+        }
     }
 }

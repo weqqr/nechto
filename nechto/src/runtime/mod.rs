@@ -56,7 +56,9 @@ impl EventHandler {
     }
 
     fn on_render(&mut self, resources: &mut Resources) {
-        // render
+        if let Some(renderer) = &mut resources.renderer {
+            renderer.render();
+        }
     }
 }
 

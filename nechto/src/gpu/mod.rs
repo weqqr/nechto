@@ -38,6 +38,9 @@ pub struct Context {
     timeline_device: timeline_semaphore::Device,
     timeline_semaphore: vk::Semaphore,
     present_semaphore: vk::Semaphore,
+    next_acquire_semaphore: vk::Semaphore,
+
+    progress: u64,
 
     frame_command_buffers: Vec<CommandBuffer>,
     frame_sync: Vec<FrameSync>,
@@ -52,6 +55,8 @@ pub struct Frame {
     image: vk::Image,
     image_view: vk::ImageView,
     command_buffer: CommandBuffer,
+    acquire_semaphore: vk::Semaphore,
+    index: u32,
 }
 
 // IMPORTANT: I couldn't figure out how to marry Vulkan with RAII, so all Vulkan
@@ -68,6 +73,8 @@ impl Drop for Context {
                     .destroy_command_buffer(command_buffer);
             }
 
+            self.device
+                .destroy_semaphore(self.next_acquire_semaphore, None);
             self.device.destroy_semaphore(self.present_semaphore, None);
             self.device.destroy_semaphore(self.timeline_semaphore, None);
 
@@ -136,6 +143,7 @@ impl Context {
             let timeline_device = timeline_semaphore::Device::new(&instance, &device);
             let timeline_semaphore = create_timeline_semaphore(&device);
             let present_semaphore = create_semaphore(&device);
+            let next_acquire_semaphore = create_semaphore(&device);
 
             let mut frame_command_buffers = Vec::new();
             let mut frame_sync = Vec::new();
@@ -166,6 +174,8 @@ impl Context {
                 timeline_device,
                 timeline_semaphore,
                 present_semaphore,
+                progress: 0,
+                next_acquire_semaphore,
                 frame_command_buffers,
                 frame_sync,
             }
@@ -186,27 +196,65 @@ impl Context {
     }
 
     pub fn begin_frame(&mut self) -> Frame {
-        let index = self.swapchain.acquire_next_frame();
+        let index = self.swapchain.acquire_next_frame(self.next_acquire_semaphore);
 
         let image = self.swapchain.image(index);
         let image_view = self.swapchain.image_view(index);
-        let command_buffer = self.frame_command_buffers[index];
+        let command_buffer = self.frame_command_buffers[index].clone();
+
+        std::mem::swap(
+            &mut self.frame_sync[0].acquire_semaphore,
+            &mut self.next_acquire_semaphore,
+        );
+
+        let wait_semaphores = &[self.timeline_semaphore];
+        let wait_values = &[self.progress];
+
+        let wait_info = vk::SemaphoreWaitInfo::default()
+            .semaphores(wait_semaphores)
+            .values(wait_values);
+
+        unsafe {
+            self.device
+                .wait_semaphores(&wait_info, 5_000_000_000)
+                .unwrap();
+        }
+
+        command_buffer.reset();
+        command_buffer.begin();
 
         Frame {
             image,
             image_view,
             command_buffer,
+            acquire_semaphore: self.frame_sync[0].acquire_semaphore,
+            index: index as u32,
         }
     }
 
     pub fn end_frame(&mut self, frame: Frame) {
+        frame.command_buffer.end();
+
         let command_buffers = &[frame.command_buffer.raw()];
+
+        self.progress += 1;
+
+        let wait_semaphores = &[frame.acquire_semaphore];
+        let signal_semaphores = &[self.timeline_semaphore, self.present_semaphore];
+        let timeline_semaphore_wait_values = &[0];
+        let timeline_semaphore_signal_values = &[self.progress, 0];
+        let wait_stages = &[vk::PipelineStageFlags::ALL_COMMANDS];
+
+        let mut timeline_submit_info = vk::TimelineSemaphoreSubmitInfo::default()
+            .signal_semaphore_values(timeline_semaphore_signal_values)
+            .wait_semaphore_values(timeline_semaphore_wait_values);
 
         let queue_submit_info = vk::SubmitInfo::default()
             .command_buffers(command_buffers)
-            .signal_semaphores(&[])
-            .wait_semaphores(&[])
-            .wait_dst_stage_mask(&[vk::PipelineStageFlags::ALL_COMMANDS]);
+            .signal_semaphores(signal_semaphores)
+            .wait_semaphores(wait_semaphores)
+            .wait_dst_stage_mask(wait_stages)
+            .push_next(&mut timeline_submit_info);
 
         unsafe {
             self.device
@@ -216,6 +264,8 @@ impl Context {
                     vk::Fence::null(),
                 )
                 .unwrap();
+
+            self.swapchain.present(frame.index, self.present_semaphore, self.graphics_compute_queue);
         }
     }
 }
