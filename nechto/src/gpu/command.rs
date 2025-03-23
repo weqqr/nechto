@@ -50,8 +50,13 @@ impl CommandBufferAllocator {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct CommandBuffer {
     buffer: vk::CommandBuffer,
 }
 
-impl CommandBuffer {}
+impl CommandBuffer {
+    pub(super) fn raw(&self) -> vk::CommandBuffer {
+        self.buffer
+    }
+}

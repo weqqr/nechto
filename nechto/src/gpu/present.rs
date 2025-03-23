@@ -151,11 +151,27 @@ impl Swapchain {
         }
     }
 
-    pub(super) fn get_image_view(&self, index: usize) -> vk::ImageView {
+    pub(super) fn image_count(&self) -> usize {
+        self.image_views.len()
+    }
+
+    pub(super) fn image_view(&self, index: usize) -> vk::ImageView {
         self.image_views[index]
     }
 
-    pub(super) fn get_image(&self, index: usize) -> vk::Image {
+    pub(super) fn image(&self, index: usize) -> vk::Image {
         self.images[index]
+    }
+
+    pub(super) fn acquire_next_frame(&mut self) -> usize {
+        // const ACQUIRE_TIMEOUT_NS: u64 = 5_000_000_000;
+
+        // unsafe {
+        //     self.swapchain_device
+        //         .acquire_next_image(self.swapchain, ACQUIRE_TIMEOUT_NS, semaphore, vk::Fence::null())
+        //         .unwrap()
+        //         .0 as usize
+        // }
+        unimplemented!()
     }
 }

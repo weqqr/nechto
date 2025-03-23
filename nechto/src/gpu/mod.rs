@@ -5,12 +5,12 @@ mod present;
 pub use self::pipeline::{Pipeline, PipelineDescriptor};
 
 use ash::ext::debug_utils;
-use ash::khr::{surface, swapchain, win32_surface};
+use ash::khr::{surface, swapchain, timeline_semaphore, win32_surface};
 use ash::vk;
 use tracing::{debug, error, info, warn};
 use winit::raw_window_handle::WindowHandle;
 
-use crate::gpu::command::CommandBufferAllocator;
+use crate::gpu::command::{CommandBuffer, CommandBufferAllocator};
 use crate::gpu::present::Swapchain;
 
 #[derive(Default)]
@@ -34,6 +34,24 @@ pub struct Context {
     swapchain: Swapchain,
 
     current_frame_index: usize,
+
+    timeline_device: timeline_semaphore::Device,
+    timeline_semaphore: vk::Semaphore,
+    present_semaphore: vk::Semaphore,
+
+    frame_command_buffers: Vec<CommandBuffer>,
+    frame_sync: Vec<FrameSync>,
+}
+
+struct FrameSync {
+    acquire_semaphore: vk::Semaphore,
+    prev_progress: u64,
+}
+
+pub struct Frame {
+    image: vk::Image,
+    image_view: vk::ImageView,
+    command_buffer: CommandBuffer,
 }
 
 // IMPORTANT: I couldn't figure out how to marry Vulkan with RAII, so all Vulkan
@@ -41,6 +59,18 @@ pub struct Context {
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
+            for sync in self.frame_sync.drain(..) {
+                self.device.destroy_semaphore(sync.acquire_semaphore, None);
+            }
+
+            for command_buffer in self.frame_command_buffers.drain(..) {
+                self.command_buffer_allocator
+                    .destroy_command_buffer(command_buffer);
+            }
+
+            self.device.destroy_semaphore(self.present_semaphore, None);
+            self.device.destroy_semaphore(self.timeline_semaphore, None);
+
             self.swapchain.destroy();
             self.command_buffer_allocator.destroy();
             self.device.destroy_device(None);
@@ -103,6 +133,23 @@ impl Context {
                 height,
             );
 
+            let timeline_device = timeline_semaphore::Device::new(&instance, &device);
+            let timeline_semaphore = create_timeline_semaphore(&device);
+            let present_semaphore = create_semaphore(&device);
+
+            let mut frame_command_buffers = Vec::new();
+            let mut frame_sync = Vec::new();
+
+            for _ in 0..swapchain.image_count() {
+                let command_buffer = command_buffer_allocator.allocate();
+                frame_command_buffers.push(command_buffer);
+
+                frame_sync.push(FrameSync {
+                    acquire_semaphore: create_semaphore(&device),
+                    prev_progress: 0,
+                });
+            }
+
             Self {
                 entry,
                 instance,
@@ -116,6 +163,11 @@ impl Context {
                 command_buffer_allocator,
                 swapchain,
                 current_frame_index: 0, // will be filled by the swapchain once rendering starts
+                timeline_device,
+                timeline_semaphore,
+                present_semaphore,
+                frame_command_buffers,
+                frame_sync,
             }
         }
     }
@@ -133,9 +185,39 @@ impl Context {
         unsafe { Pipeline::new(&self.device, desc) }
     }
 
-    pub fn begin_frame(&mut self) {}
+    pub fn begin_frame(&mut self) -> Frame {
+        let index = self.swapchain.acquire_next_frame();
 
-    pub fn end_frame(&mut self) {}
+        let image = self.swapchain.image(index);
+        let image_view = self.swapchain.image_view(index);
+        let command_buffer = self.frame_command_buffers[index];
+
+        Frame {
+            image,
+            image_view,
+            command_buffer,
+        }
+    }
+
+    pub fn end_frame(&mut self, frame: Frame) {
+        let command_buffers = &[frame.command_buffer.raw()];
+
+        let queue_submit_info = vk::SubmitInfo::default()
+            .command_buffers(command_buffers)
+            .signal_semaphores(&[])
+            .wait_semaphores(&[])
+            .wait_dst_stage_mask(&[vk::PipelineStageFlags::ALL_COMMANDS]);
+
+        unsafe {
+            self.device
+                .queue_submit(
+                    self.graphics_compute_queue,
+                    &[queue_submit_info],
+                    vk::Fence::null(),
+                )
+                .unwrap();
+        }
+    }
 }
 
 unsafe fn create_instance(entry: &ash::Entry, enable_debug: bool) -> ash::Instance {
@@ -338,6 +420,9 @@ unsafe fn create_device(
 
         let enabled_extension_names = &[swapchain::NAME.as_ptr()];
 
+        let mut vulkan_1_2_features =
+            vk::PhysicalDeviceVulkan12Features::default().timeline_semaphore(true);
+
         let mut vulkan_1_3_features = vk::PhysicalDeviceVulkan13Features::default()
             .dynamic_rendering(true)
             .synchronization2(true);
@@ -345,10 +430,27 @@ unsafe fn create_device(
         let create_info = vk::DeviceCreateInfo::default()
             .enabled_extension_names(enabled_extension_names)
             .queue_create_infos(queue_create_infos)
-            .push_next(&mut vulkan_1_3_features);
+            .push_next(&mut vulkan_1_3_features)
+            .push_next(&mut vulkan_1_2_features);
 
         instance
             .create_device(selected_physical_device.physical_device, &create_info, None)
             .unwrap()
     }
+}
+
+unsafe fn create_timeline_semaphore(device: &ash::Device) -> vk::Semaphore {
+    let mut timeline_create_info = vk::SemaphoreTypeCreateInfo::default()
+        .initial_value(0)
+        .semaphore_type(vk::SemaphoreType::TIMELINE);
+
+    let create_info = vk::SemaphoreCreateInfo::default().push_next(&mut timeline_create_info);
+
+    unsafe { device.create_semaphore(&create_info, None).unwrap() }
+}
+
+unsafe fn create_semaphore(device: &ash::Device) -> vk::Semaphore {
+    let create_info = vk::SemaphoreCreateInfo::default();
+
+    unsafe { device.create_semaphore(&create_info, None).unwrap() }
 }
