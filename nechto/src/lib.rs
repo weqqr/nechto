@@ -2,6 +2,7 @@
 #![allow(clippy::single_match)]
 
 pub mod collections;
+pub mod config;
 pub mod gpu;
 pub mod handle;
 pub mod input;

@@ -1,17 +1,20 @@
 use std::sync::Arc;
 
 use winit::application::ApplicationHandler;
+use winit::dpi::PhysicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::KeyCode;
 use winit::window::{Window, WindowId};
 
+use crate::config::Config;
 use crate::input::{Action, InputHandler};
 use crate::render::Renderer;
 use crate::vfs::VirtualFs;
 
 pub struct Resources {
     renderer: Option<Renderer>,
+    config: Config,
     input_handler: InputHandler,
     vfs: Arc<VirtualFs>,
 }
@@ -79,10 +82,13 @@ impl Runtime {
 
         let vfs = Arc::new(vfs);
 
+        let config = Config::parse_file("config.ini");
+
         Self {
             event_handler: EventHandler::new(),
             resources: Resources {
                 renderer: None,
+                config,
                 input_handler,
                 vfs,
             },
@@ -98,10 +104,18 @@ impl Runtime {
 
 impl ApplicationHandler for Runtime {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let window_attributes = Window::default_attributes();
+        let window_attributes = Window::default_attributes().with_inner_size(PhysicalSize {
+            width: self.resources.config.window_width,
+            height: self.resources.config.window_height,
+        });
+
         let window = event_loop.create_window(window_attributes).unwrap();
 
-        let renderer = Renderer::new(window, Arc::clone(&self.resources.vfs));
+        let renderer = Renderer::new(
+            window,
+            Arc::clone(&self.resources.vfs),
+            self.resources.config.render.clone(),
+        );
         self.resources.renderer = Some(renderer);
     }
 

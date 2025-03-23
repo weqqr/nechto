@@ -4,6 +4,7 @@ use winit::dpi::PhysicalSize;
 use winit::raw_window_handle::HasWindowHandle;
 use winit::window::Window;
 
+use crate::config::RenderConfig;
 use crate::gpu::{self, ContextOptions};
 use crate::vfs::VirtualFs;
 
@@ -16,13 +17,15 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(window: Window, vfs: Arc<VirtualFs>) -> Self {
+    pub fn new(window: Window, vfs: Arc<VirtualFs>, config: RenderConfig) -> Self {
         let size = window.inner_size();
         let mut ctx = gpu::Context::new(
             window.window_handle().unwrap(),
             size.width,
             size.height,
-            ContextOptions { enable_debug: true },
+            ContextOptions {
+                enable_debug: config.vulkan_enable_debug,
+            },
         );
 
         let shader = vfs.read("$build/world.spv").unwrap();

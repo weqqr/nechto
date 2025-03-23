@@ -1,3 +1,9 @@
+# Files for cargo
 /target
 Cargo.lock
+
+# Prebuilt assets
 /build
+
+# Custom engine configuration options
+config.ini
