@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use ash::vk;
+use glam::{IVec2, UVec2};
 use winit::dpi::PhysicalSize;
 use winit::raw_window_handle::HasWindowHandle;
 use winit::window::Window;
@@ -65,12 +66,9 @@ impl Renderer {
 
         cmd.begin_rendering(
             target,
-            vk::Rect2D {
-                offset: vk::Offset2D { x: 0, y: 0 },
-                extent: vk::Extent2D {
-                    width: size.width,
-                    height: size.height,
-                },
+            gpu::Rect2D {
+                offset: IVec2::new(0, 0),
+                extent: UVec2::new(size.width, size.height),
             },
         );
 

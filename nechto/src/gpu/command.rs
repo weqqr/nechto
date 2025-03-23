@@ -1,5 +1,7 @@
 use ash::vk;
 
+use crate::gpu::{ImageView, Rect2D};
+
 pub struct CommandBufferAllocator {
     device: ash::Device,
     pool: vk::CommandPool,
@@ -120,7 +122,7 @@ impl CommandBuffer {
         }
     }
 
-    pub fn begin_rendering(&self, image_view: vk::ImageView, render_area: vk::Rect2D) {
+    pub fn begin_rendering(&self, image_view: ImageView, render_area: Rect2D) {
         let rendering_attachment_info = vk::RenderingAttachmentInfo::default()
             .clear_value(vk::ClearValue {
                 color: vk::ClearColorValue {
@@ -128,7 +130,7 @@ impl CommandBuffer {
                 },
             })
             .image_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
-            .image_view(image_view)
+            .image_view(image_view.image_view)
             .load_op(vk::AttachmentLoadOp::CLEAR)
             .store_op(vk::AttachmentStoreOp::STORE)
             .resolve_mode(vk::ResolveModeFlags::NONE);
@@ -138,7 +140,16 @@ impl CommandBuffer {
         let rendering_info = vk::RenderingInfo::default()
             .color_attachments(color_attachments)
             .layer_count(1)
-            .render_area(render_area);
+            .render_area(vk::Rect2D {
+                offset: vk::Offset2D {
+                    x: render_area.offset.x,
+                    y: render_area.offset.y,
+                },
+                extent: vk::Extent2D {
+                    width: render_area.extent.x,
+                    height: render_area.extent.y,
+                },
+            });
 
         unsafe {
             self.device

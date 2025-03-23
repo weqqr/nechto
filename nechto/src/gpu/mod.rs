@@ -1,7 +1,9 @@
 mod command;
+mod domain;
 mod pipeline;
 mod present;
 
+pub use self::domain::*;
 pub use self::pipeline::{Pipeline, PipelineDescriptor};
 
 use ash::ext::debug_utils;
@@ -293,8 +295,10 @@ impl Frame {
         &mut self.command_buffer
     }
 
-    pub fn image_view(&self) -> vk::ImageView {
-        self.image_view
+    pub fn image_view(&self) -> ImageView {
+        ImageView {
+            image_view: self.image_view,
+        }
     }
 }
 

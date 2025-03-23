@@ -49,10 +49,10 @@ impl InputHandler {
         match event.state {
             ElementState::Pressed => {
                 self.active_actions.insert(action.clone());
-            },
+            }
             ElementState::Released => {
                 self.active_actions.remove(action);
-            },
+            }
         }
 
         self.action_queue.push(action.clone());
