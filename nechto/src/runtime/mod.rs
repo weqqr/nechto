@@ -27,7 +27,7 @@ impl EventHandler {
     }
 
     fn on_window_event(
-        &self,
+        &mut self,
         resources: &mut Resources,
         event_loop: &ActiveEventLoop,
         event: WindowEvent,
@@ -39,10 +39,14 @@ impl EventHandler {
             WindowEvent::Resized(size) => {
                 if let Some(renderer) = &mut resources.renderer {
                     renderer.resize(size);
+                    renderer.window().request_redraw();
                 }
             }
             WindowEvent::KeyboardInput { event, .. } => {
                 resources.input_handler.submit_key_event(event);
+            }
+            WindowEvent::RedrawRequested => {
+                self.on_render(resources);
             }
             _ => {}
         }

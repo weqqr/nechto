@@ -52,6 +52,10 @@ impl Renderer {
         }
     }
 
+    pub fn window(&self) -> &Window {
+        &self.window
+    }
+
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
         self.ctx.resize_swapchain(size.width, size.height);
     }
