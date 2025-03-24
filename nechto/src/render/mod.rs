@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
-use ash::vk;
 use glam::{IVec2, UVec2};
 use winit::dpi::PhysicalSize;
 use winit::raw_window_handle::HasWindowHandle;
 use winit::window::Window;
 
 use crate::config::RenderConfig;
-use crate::gpu::{self, ContextOptions};
+use crate::gpu;
 use crate::vfs::VirtualFs;
 
 pub struct Renderer {
@@ -32,7 +31,7 @@ impl Renderer {
             window.window_handle().unwrap(),
             size.width,
             size.height,
-            ContextOptions {
+            gpu::ContextOptions {
                 enable_debug: config.vulkan_enable_debug,
             },
         );
