@@ -1,3 +1,4 @@
+pub mod buffer;
 mod command;
 mod domain;
 mod pipeline;

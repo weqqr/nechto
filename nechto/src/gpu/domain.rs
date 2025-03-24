@@ -11,3 +11,14 @@ pub struct Rect2D {
 pub struct ImageView {
     pub(super) image_view: vk::ImageView,
 }
+
+pub enum MemoryType {
+    DeviceLocal,
+    HostVisible,
+}
+
+pub struct BufferAllocationDescriptor {
+    pub memory_type: MemoryType,
+    pub size: u64,
+    pub usage_flags: u64,
+}
