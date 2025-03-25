@@ -1,6 +1,7 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::single_match)]
 
+pub mod asset;
 pub mod collections;
 pub mod config;
 pub mod gpu;
