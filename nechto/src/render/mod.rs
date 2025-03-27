@@ -14,20 +14,17 @@ pub struct Renderer {
     vfs: Arc<VirtualFs>,
 
     ctx: gpu::Context,
-    test_pipeline: gpu::Pipeline,
 }
 
 // FIXME: Implement GC for gpu objects and remove Drop impl for renderer
 impl Drop for Renderer {
-    fn drop(&mut self) {
-        self.ctx.destroy_pipeline(&mut self.test_pipeline);
-    }
+    fn drop(&mut self) {}
 }
 
 impl Renderer {
     pub fn new(window: Window, vfs: Arc<VirtualFs>, config: RenderConfig) -> Self {
         let size = window.inner_size();
-        let mut ctx = gpu::Context::new(
+        let ctx = gpu::Context::new(
             window.window_handle().unwrap(),
             size.width,
             size.height,
@@ -36,19 +33,7 @@ impl Renderer {
             },
         );
 
-        let shader = vfs.read("$build/world.spv").unwrap();
-
-        let test_pipeline = ctx.create_pipeline(gpu::PipelineDescriptor {
-            vertex_shader: shader.clone(),
-            fragment_shader: shader,
-        });
-
-        Self {
-            window,
-            ctx,
-            vfs,
-            test_pipeline,
-        }
+        Self { window, ctx, vfs }
     }
 
     pub fn window(&self) -> &Window {
