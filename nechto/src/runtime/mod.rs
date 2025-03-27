@@ -1,3 +1,7 @@
+mod app;
+
+pub use self::app::App;
+
 use std::sync::Arc;
 
 use winit::application::ApplicationHandler;
@@ -19,11 +23,13 @@ pub struct Resources {
     vfs: Arc<VirtualFs>,
 }
 
-pub struct EventHandler {}
+pub struct EventHandler {
+    app: Box<dyn App>,
+}
 
 impl EventHandler {
-    fn new() -> Self {
-        Self {}
+    fn new(app: Box<dyn App>) -> Self {
+        Self { app }
     }
 
     fn on_window_event(
@@ -60,6 +66,7 @@ impl EventHandler {
         }
 
         resources.input_handler.reset();
+        self.app.update(resources);
     }
 
     fn on_render(&mut self, resources: &mut Resources) {
@@ -75,7 +82,7 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub fn new() -> Self {
+    pub fn new(mut app: impl App) -> Self {
         let mut input_handler = InputHandler::new();
 
         input_handler.add_action(KeyCode::Escape, Action::new("quit"));
@@ -88,14 +95,18 @@ impl Runtime {
 
         let config = Config::parse_file("config.ini");
 
+        let mut resources = Resources {
+            renderer: None,
+            config,
+            input_handler,
+            vfs,
+        };
+
+        app.init(&mut resources);
+
         Self {
-            event_handler: EventHandler::new(),
-            resources: Resources {
-                renderer: None,
-                config,
-                input_handler,
-                vfs,
-            },
+            event_handler: EventHandler::new(Box::new(app)),
+            resources,
         }
     }
 
