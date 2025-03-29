@@ -18,7 +18,7 @@ impl Context {
         runtime.set_loader(
             (
                 BuiltinResolver::default(),
-                FileResolver::default().with_path("./data/script"),
+                FileResolver::default().with_path("./build/script"),
             ),
             (ScriptLoader::default(),),
         );
