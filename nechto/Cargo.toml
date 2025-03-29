@@ -9,6 +9,7 @@ bytemuck = "1.22.0"
 glam = "0.30.1"
 gpu-alloc = "0.6.0"
 gpu-alloc-ash = "0.7.0"
+rquickjs = { version = "0.9.0", features = ["loader"] }
 thiserror = "2.0.12"
 tracing = "0.1.41"
 winit = "0.30.9"

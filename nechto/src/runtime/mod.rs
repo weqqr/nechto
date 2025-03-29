@@ -13,14 +13,16 @@ use winit::window::{Window, WindowId};
 
 use crate::config::Config;
 use crate::input::{Action, InputHandler};
+use crate::js;
 use crate::render::Renderer;
 use crate::vfs::VirtualFs;
 
 pub struct Resources {
-    renderer: Option<Renderer>,
-    config: Config,
-    input_handler: InputHandler,
-    vfs: Arc<VirtualFs>,
+    pub renderer: Option<Renderer>,
+    pub config: Config,
+    pub input_handler: InputHandler,
+    pub vfs: Arc<VirtualFs>,
+    pub js_ctx: js::Context,
 }
 
 pub struct EventHandler {
@@ -95,11 +97,14 @@ impl Runtime {
 
         let config = Config::parse_file("config.ini");
 
+        let js_ctx = js::Context::new();
+
         let mut resources = Resources {
             renderer: None,
             config,
             input_handler,
             vfs,
+            js_ctx,
         };
 
         app.init(&mut resources);

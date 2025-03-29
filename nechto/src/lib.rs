@@ -11,3 +11,4 @@ pub mod realm;
 pub mod render;
 pub mod runtime;
 pub mod vfs;
+pub mod js;
