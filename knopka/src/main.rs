@@ -10,4 +10,3 @@ fn main() {
     let rt = Runtime::new(Editor {});
     rt.run();
 }
-

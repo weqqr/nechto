@@ -3,7 +3,6 @@ mod console;
 use std::path::Path;
 use std::sync::Arc;
 
-use rquickjs::loader::{BuiltinResolver, FileResolver, ScriptLoader};
 use rquickjs::module::Declared;
 use rquickjs::{CatchResultExt, Function, Module, Value};
 

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -97,9 +97,9 @@ impl IntoPathSpec for &'_ str {
     }
 }
 
-impl<'a> IntoPathSpec for PathSpec<'a> {
+impl IntoPathSpec for PathSpec<'_> {
     fn as_path_spec(&self) -> Result<PathSpec, Error> {
-        Ok(self.clone())
+        Ok(*self)
     }
 }
 
