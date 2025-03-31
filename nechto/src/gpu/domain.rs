@@ -17,7 +17,7 @@ pub enum MemoryType {
     HostVisible,
 }
 
-pub struct BufferAllocationDescriptor {
+pub struct BufferDescriptor {
     pub memory_type: MemoryType,
     pub size: u64,
     pub usage_flags: u64,

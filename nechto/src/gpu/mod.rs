@@ -4,6 +4,7 @@ mod domain;
 mod pipeline;
 mod present;
 
+pub use self::buffer::Buffer;
 pub use self::domain::*;
 pub use self::pipeline::{Pipeline, PipelineDescriptor};
 
@@ -13,6 +14,7 @@ use ash::vk;
 use tracing::{debug, error, info, warn};
 use winit::raw_window_handle::WindowHandle;
 
+use crate::gpu::buffer::BufferAllocator;
 use crate::gpu::command::{CommandBuffer, CommandBufferAllocator};
 use crate::gpu::present::Swapchain;
 
@@ -35,6 +37,7 @@ pub struct Context {
     graphics_compute_queue: vk::Queue,
     command_buffer_allocator: CommandBufferAllocator,
     swapchain: Swapchain,
+    buffer_allocator: BufferAllocator,
 
     current_frame_index: usize,
 
@@ -51,7 +54,6 @@ pub struct Context {
 
 struct FrameSync {
     acquire_semaphore: vk::Semaphore,
-    prev_progress: u64,
 }
 
 // IMPORTANT: I couldn't figure out how to marry Vulkan with RAII, so all Vulkan
@@ -137,6 +139,9 @@ impl Context {
                 height,
             );
 
+            let buffer_allocator =
+                BufferAllocator::new(&instance, &device, selected_physical_device.physical_device);
+
             let timeline_device = timeline_semaphore::Device::new(&instance, &device);
             let timeline_semaphore = create_timeline_semaphore(&device);
             let present_semaphore = create_semaphore(&device);
@@ -151,7 +156,6 @@ impl Context {
 
                 frame_sync.push(FrameSync {
                     acquire_semaphore: create_semaphore(&device),
-                    prev_progress: 0,
                 });
             }
 
@@ -167,6 +171,7 @@ impl Context {
                 graphics_compute_queue,
                 command_buffer_allocator,
                 swapchain,
+                buffer_allocator,
                 current_frame_index: 0, // will be filled by the swapchain once rendering starts
                 timeline_device,
                 timeline_semaphore,
@@ -194,6 +199,14 @@ impl Context {
 
     pub fn destroy_pipeline(&mut self, pipeline: &mut Pipeline) {
         unsafe { pipeline.destroy() }
+    }
+
+    pub fn create_buffer(&mut self, desc: BufferDescriptor) -> Buffer {
+        self.buffer_allocator.allocate_buffer(desc)
+    }
+
+    pub fn destroy_buffer(&mut self, buffer: Buffer) {
+        self.buffer_allocator.deallocate_buffer(buffer);
     }
 
     pub fn begin_frame(&mut self) -> Frame {
@@ -503,8 +516,9 @@ unsafe fn create_device(
 
         let enabled_extension_names = &[swapchain::NAME.as_ptr()];
 
-        let mut vulkan_1_2_features =
-            vk::PhysicalDeviceVulkan12Features::default().timeline_semaphore(true);
+        let mut vulkan_1_2_features = vk::PhysicalDeviceVulkan12Features::default()
+            .timeline_semaphore(true)
+            .buffer_device_address(true);
 
         let mut vulkan_1_3_features = vk::PhysicalDeviceVulkan13Features::default()
             .dynamic_rendering(true)

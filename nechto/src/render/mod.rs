@@ -24,7 +24,7 @@ impl Drop for Renderer {
 impl Renderer {
     pub fn new(window: Window, vfs: Arc<VirtualFs>, config: RenderConfig) -> Self {
         let size = window.inner_size();
-        let ctx = gpu::Context::new(
+        let mut ctx = gpu::Context::new(
             window.window_handle().unwrap(),
             size.width,
             size.height,
@@ -32,6 +32,12 @@ impl Renderer {
                 enable_debug: config.vulkan_enable_debug,
             },
         );
+
+        let buffer = ctx.create_buffer(gpu::BufferDescriptor {
+            memory_type: gpu::MemoryType::HostVisible,
+            size: 64,
+            usage_flags: 0,
+        });
 
         Self { window, ctx, vfs }
     }

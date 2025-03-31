@@ -1,8 +1,8 @@
 use ash::vk;
-use gpu_alloc::{Config, GpuAllocator, MemoryPropertyFlags, Request, UsageFlags};
+use gpu_alloc::{Config, GpuAllocator, MemoryBlock, MemoryPropertyFlags, Request, UsageFlags};
 use gpu_alloc_ash::AshMemoryDevice;
 
-use crate::gpu::{BufferAllocationDescriptor, MemoryType};
+use crate::gpu::{BufferDescriptor, MemoryType};
 
 pub struct BufferAllocator {
     device: ash::Device,
@@ -29,13 +29,14 @@ impl BufferAllocator {
         }
     }
 
-    pub fn allocate_buffer(&mut self, desc: BufferAllocationDescriptor) -> vk::Buffer {
-        let aa = AshMemoryDevice::wrap(&self.device);
+    pub fn allocate_buffer(&mut self, desc: BufferDescriptor) -> Buffer {
+        let mem = AshMemoryDevice::wrap(&self.device);
 
         unsafe {
-            self.allocator
+            let block = self
+                .allocator
                 .alloc(
-                    aa,
+                    mem,
                     Request {
                         size: desc.size,
                         align_mask: 0,
@@ -47,9 +48,34 @@ impl BufferAllocator {
                         .bits() as u32,
                     },
                 )
-                .unwrap()
-        };
+                .unwrap();
 
-        unimplemented!()
+            let create_info = vk::BufferCreateInfo::default()
+                .sharing_mode(vk::SharingMode::EXCLUSIVE)
+                .size(block.size())
+                .usage(vk::BufferUsageFlags::VERTEX_BUFFER);
+
+            let buffer = self.device.create_buffer(&create_info, None).unwrap();
+
+            self.device
+                .bind_buffer_memory(buffer, *block.memory(), block.offset())
+                .unwrap();
+
+            Buffer { buffer, block }
+        }
     }
+
+    pub fn deallocate_buffer(&mut self, buffer: Buffer) {
+        let mem = AshMemoryDevice::wrap(&self.device);
+
+        unsafe {
+            self.device.destroy_buffer(buffer.buffer, None);
+            self.allocator.dealloc(mem, buffer.block);
+        }
+    }
+}
+
+pub struct Buffer {
+    buffer: vk::Buffer,
+    block: MemoryBlock<vk::DeviceMemory>,
 }
