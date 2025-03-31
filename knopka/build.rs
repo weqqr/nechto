@@ -1,4 +1,8 @@
 fn main() {
-    nechto_build::build_shaders("../data/shader", "../build/shader", &["world.slang"]);
-    nechto_build::build_scripts("../data/script", "../build/script");
+    nechto_build::build_shaders(
+        "../data/engine/shader",
+        "../build/engine/shader",
+        &["world.slang"],
+    );
+    nechto_build::build_scripts("../data/engine/script", "../build/engine/script");
 }
