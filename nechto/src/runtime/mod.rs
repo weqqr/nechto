@@ -97,7 +97,7 @@ impl Runtime {
 
         let config = Config::parse_file("config.ini");
 
-        let js_ctx = js::Context::new();
+        let js_ctx = js::Context::new(Arc::clone(&vfs));
 
         let mut resources = Resources {
             renderer: None,
